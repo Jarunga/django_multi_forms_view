@@ -26,6 +26,15 @@ class MultiDeletionMixin:
         else:
             return super().post(request, *args, **kwargs)
 
+class RequestMixin:
+    
+   def get_initial(self, form_name):
+       initial_method = 'get_%s_initial' % form_name
+       if hasattr(self, initial_method):
+           return getattr(self, initial_method)()
+       else:
+           return {'action': form_name,'request':self.request}
+
 class MultiStepFormsMixin:
 
     steps=[]
@@ -36,7 +45,6 @@ class MultiStepFormsMixin:
         """If the forms are valid, save the associated model."""
         obj = forms.get(form_name)
         self.object = obj.save(request=self.request)
-        print("bingo!")
 
         if form_name in self.success_url:
             return HttpResponseRedirect(self.get_success_url(form_name))
@@ -88,7 +96,6 @@ class MultiStepFormsMixin:
         a list. May not be called if render_to_response() is overridden.
         """
         self.template_name=self.template_names[self.current_step]
-        print(self.template_name)
         
         if self.template_name is None:
             raise ImproperlyConfigured(
@@ -110,7 +117,6 @@ class MultiStepFormsMixin:
     def get_context_data(self,*args,**kwargs):
         context=super().get_context_data(*args,**kwargs)
         context['objects']={re.sub('_form$','',form_class):obj.instance for form_class,obj in context['forms'].items()}
-        print(context['objects'])
 
         if self.request.method=='POST':
             context['forms']=self.get_forms(self.get_next_form_classes())
@@ -136,4 +142,7 @@ class MultiFormsCreateView(SingleObjectTemplateResponseMixin, BaseMultipleFormsC
    pass
 
 class MultiStepFormsView(MultiDeletionMixin,MultiStepFormsMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
+   pass
+
+class MultiStepRequestFormsView(RequestMixin,MultiStepFormsMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
    pass
