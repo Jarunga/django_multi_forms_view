@@ -26,14 +26,14 @@ class MultiDeletionMixin:
         else:
             return super().post(request, *args, **kwargs)
 
-class RequestMixin:
+class UserMixin:
     
    def get_initial(self, form_name):
        initial_method = 'get_%s_initial' % form_name
        if hasattr(self, initial_method):
            return getattr(self, initial_method)()
        else:
-           return {'action': form_name,'request':self.request}
+           return {'action': form_name,'user':self.request.user}
 
 class MultiStepFormsMixin:
 
@@ -44,7 +44,7 @@ class MultiStepFormsMixin:
     def forms_valid(self, forms, form_name):
         """If the forms are valid, save the associated model."""
         obj = forms.get(form_name)
-        self.object = obj.save(request=self.request)
+        self.object = obj.save()
 
         if form_name in self.success_url:
             return HttpResponseRedirect(self.get_success_url(form_name))
@@ -144,5 +144,5 @@ class MultiFormsCreateView(SingleObjectTemplateResponseMixin, BaseMultipleFormsC
 class MultiStepFormsView(MultiDeletionMixin,MultiStepFormsMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
    pass
 
-class MultiStepRequestFormsView(RequestMixin,MultiStepFormsMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
+class UserMultiStepFormsView(UserMixin,MultiStepFormsMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
    pass
