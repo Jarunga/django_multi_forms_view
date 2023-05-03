@@ -144,5 +144,5 @@ class MultiFormsCreateView(SingleObjectTemplateResponseMixin, BaseMultipleFormsC
 class MultiStepFormsView(MultiDeletionMixin,MultiStepFormsMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
    pass
 
-class UserMultiStepFormsView(UserMixin,MultiStepFormsMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
+class UserMultiStepFormsView(MultiDeletionMixin,UserMixin,MultiStepFormsMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
    pass
