@@ -35,23 +35,23 @@ class UserMixin:
        else:
            return {'action': form_name,'user':self.request.user}
 
-class MultiStepFormsMixin:
+class MultiStepFormMixin:
 
     steps=[]
     current_step=None
     template_names={}
 
     def forms_valid(self, forms, form_name):
-        """If the forms are valid, save the associated model."""
-        obj = forms.get(form_name)
-        self.object = obj.save()
-
-        if form_name in self.success_url:
-            return HttpResponseRedirect(self.get_success_url(form_name))
-
+        form_valid_method = '%s_form_valid' % form_name
+        if hasattr(self, form_valid_method):
+            return getattr(self, form_valid_method)(forms[form_name])
         else:
-            return self.render_to_response(self.get_context_data(forms=forms,form_name=form_name))
+            if form_name in self.success_url:
+                return HttpResponseRedirect(self.get_success_url(form_name))
 
+            else:
+                return self.render_to_response(self.get_context_data(forms=forms,form_name=form_name)) 
+        
     def get_form_kwargs(self, form_name):
         kwargs = {}
         kwargs.update({'initial':self.get_initial(form_name)})
@@ -116,13 +116,31 @@ class MultiStepFormsMixin:
 
     def get_context_data(self,*args,**kwargs):
         context=super().get_context_data(*args,**kwargs)
-        context['objects']={re.sub('_form$','',form_class):obj.instance for form_class,obj in context['forms'].items()}
 
         if self.request.method=='POST':
             context['forms']=self.get_forms(self.get_next_form_classes())
             
         return context
-    
+
+class ModelMultiStepFormMixin(MultiStepFormMixin):
+
+    def forms_valid(self, forms, form_name):
+        """If the forms are valid, save the associated model."""
+        obj = forms.get(form_name)
+        self.object = obj.save()
+ 
+        if form_name in self.success_url:
+            return HttpResponseRedirect(self.get_success_url(form_name))
+
+        else:
+            return self.render_to_response(self.get_context_data(forms=forms,form_name=form_name))    
+
+    def get_context_data(self,*args,**kwargs):
+        context=super().get_context_data(*args,**kwargs)
+        context['object']=self.object
+
+        return context
+
 class BaseMultipleFormsCreateView(ModelMultiFormMixin, ProcessMultipleFormsView):
    """
    Base view for updating an existing object.
@@ -141,8 +159,11 @@ class BaseMultipleFormsCreateView(ModelMultiFormMixin, ProcessMultipleFormsView)
 class MultiFormsCreateView(SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
    pass
 
-class MultiStepFormsView(MultiDeletionMixin,MultiStepFormsMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
+class MultiStepFormView(MultiDeletionMixin,MultiStepFormMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
    pass
 
-class UserMultiStepFormsView(MultiDeletionMixin,UserMixin,MultiStepFormsMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
+class UserMultiStepFormView(MultiDeletionMixin,UserMixin,MultiStepFormMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
+   pass
+
+class UserModelMultiStepFormView(MultiDeletionMixin,UserMixin,ModelMultiStepFormMixin,SingleObjectTemplateResponseMixin, BaseMultipleFormsCreateView):
    pass
