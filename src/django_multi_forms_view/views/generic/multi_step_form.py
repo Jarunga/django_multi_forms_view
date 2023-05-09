@@ -79,7 +79,8 @@ class MultiStepFormMixin(ContextMixin):
                     'files': self.request.FILES,
                 })
             else:
-                kwargs.update({'instance':self.object})
+                if hasattr(self, 'object'):
+                    kwargs.update({'instance':self.object})
                 
         return kwargs
 
@@ -90,7 +91,6 @@ class MultiStepFormMixin(ContextMixin):
             return getattr(self, form_valid_method)(forms[form_name])
         else:
             if form_name in self.success_url:
-                print(self.get_success_url(form_name))
                 return HttpResponseRedirect(self.get_success_url(form_name))
 
             else:
@@ -128,13 +128,16 @@ class MultiStepFormMixin(ContextMixin):
 
         return form_classes
 
-    def get_context_data(self,*args,**kwargs):
-        kwargs=super().get_context_data(*args,**kwargs)
+    def get_context_data(self, **kwargs):
+
+        if self.extra_context is not None:
+            kwargs.update(self.extra_context)
 
         if self.request.method=='POST':
             if kwargs['forms'][self.request.POST.get('action')].is_valid():
-                kwargs['forms'].update(self.get_next_form_classes())
-
+                next_forms = self.get_forms(self.get_next_form_classes())           
+                kwargs['forms'].update(**next_forms)
+                
         return kwargs
     
 class ProcessMultipleStepFormsView(ProcessFormView):

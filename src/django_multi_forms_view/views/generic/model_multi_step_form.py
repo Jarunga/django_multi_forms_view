@@ -9,8 +9,9 @@ class ModelMultiStepFormsMixin(MultiStepFormMixin,ModelFormMixin):
 
         if self.extra_context is not None:
             kwargs.update(self.extra_context)
-
-        kwargs.update({'object':self.object})
+            
+        if hasattr(self, 'object'):
+            kwargs.update({'object':self.object})
 
         if self.request.method=='POST':
             if kwargs['forms'][self.request.POST.get('action')].is_valid():

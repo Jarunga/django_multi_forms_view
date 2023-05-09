@@ -12,7 +12,7 @@ def _requires_from_file(filename):
 
 setup(
     name="django_multi_forms_view",
-    version="0.0.1",
+    version="1.3.1",
     license="ライセンス",
     description="djangoのカスタムView",
     author="jarunga",
